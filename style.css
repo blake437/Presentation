@@ -5,11 +5,13 @@
 h1{
   text-align: center;
   color: darkblue;
+  z-index: 100;
 }
 
 h2{
   text-align: center;
   color: blue;
+  z-index: 100;
 }
 
 .section{
