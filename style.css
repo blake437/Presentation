@@ -1,3 +1,13 @@
 .slidecenter{
   alignment: center;
 }
+
+h1{
+  alignment:center;
+  color: darkblue;
+}
+
+h2{
+  alignment: center;
+  color: blue;
+}
