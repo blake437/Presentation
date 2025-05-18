@@ -7,12 +7,14 @@ h1{
   text-align: center;
   color: darkblue;
   z-index: 100;
+  font-size: 10vw;
 }
 
 h2{
   text-align: center;
   color: blue;
   z-index: 100;
+  font-size: 6vw
 }
 
 .section{
