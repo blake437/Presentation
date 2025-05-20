@@ -4,9 +4,10 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
-    <style>
-      body{font-family: 'Nunito', sans-serif;}
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/smoothscroll-polyfill@0.4.4/dist/smoothscroll.min.js"></script>
+    <script>
+      if (window.smoothscroll) smoothscroll.polyfill();
+    </script>
   </head>
   <body id="body">
     <div class="section titleslide">
@@ -15,12 +16,8 @@
         <h2 class="subtitle" id="subtitle" data-aos="fade-up" data-aos-delay="300">And the subtitle goes here</h2>
       </div>
     </div>
-    <div class="section slide">
-    </div>
+    <div class="section slide"></div>
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <script src="Script.js"></script>
   </body>
-  <script src="Script.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>
-   AOS.init();
-  </script>
 </html>
