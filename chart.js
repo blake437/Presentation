@@ -7,14 +7,20 @@ class PieChart extends HTMLElement {
     svg.classList.add('pie-svg');
     svg.setAttribute('viewBox', '0 0 250 250');
     container.appendChild(svg);
+    const legend = document.createElement('div');
+    legend.className = 'pie-legend';
+    container.appendChild(legend);
     this.appendChild(container);
     this.svg = svg;
+    this.legend = legend;
     this.defaultColors = [
       '#e74c3c', '#3498db', '#f1c40f', '#27ae60', '#9b59b6', '#1abc9c',
       '#e67e22', '#34495e', '#7f8c8d', '#ff6f61', '#6b5b95', '#88b04b'
     ];
     this._animationFrame = null;
     this._interval = null;
+    this._observer = null;
+    this._inView = false;
   }
   connectedCallback() {
     this.style.display = 'block';
@@ -44,10 +50,11 @@ class PieChart extends HTMLElement {
   }
   drawChart() {
     this.svg.innerHTML = '';
+    this.legend.innerHTML = '';
     const seriesEls = Array.from(this.querySelectorAll('series'));
     const usedColors = [];
     const data = [];
-    seriesEls.forEach((el, i) => {
+    seriesEls.forEach((el) => {
       let value = el.getAttribute('value');
       if (value === null || value === undefined || isNaN(Number(value))) return;
       value = Number(value);
@@ -55,17 +62,21 @@ class PieChart extends HTMLElement {
       let color = el.getAttribute('color');
       if (!color) {
         color = this.defaultColors.find(c => !usedColors.includes(c));
-        if (!color) color = '#'+Math.floor(Math.random()*16777215).toString(16);
+        if (!color) color = '#' + Math.floor(Math.random() * 16777215).toString(16);
       }
       usedColors.push(color);
-      data.push({ value, color });
+      let label = (el.textContent || '').trim();
+      data.push({ value, color, label });
     });
-    if (!data.length) return;
+    if (!data.length) {
+      this.legend.style.display = 'none';
+      return;
+    }
     const cx = 125, cy = 125, r = 100;
     const total = data.reduce((sum, d) => sum + d.value, 0);
     let currentAngle = -90;
     this.sliceData = [];
-    data.forEach((d, i) => {
+    data.forEach((d) => {
       const angleSpan = (d.value / total) * 360;
       const start = currentAngle;
       const end = start;
@@ -83,6 +94,26 @@ class PieChart extends HTMLElement {
       });
       currentAngle += angleSpan;
     });
+    const hasLabels = data.some(d => d.label);
+    if (hasLabels) {
+      this.legend.style.display = '';
+      data.forEach(d => {
+        if (!d.label) return;
+        const entry = document.createElement('div');
+        entry.className = 'pie-legend-entry';
+        const swatch = document.createElement('span');
+        swatch.className = 'pie-legend-swatch';
+        swatch.style.background = d.color;
+        entry.appendChild(swatch);
+        const text = document.createElement('span');
+        text.className = 'pie-legend-label';
+        text.textContent = d.label;
+        entry.appendChild(text);
+        this.legend.appendChild(entry);
+      });
+    } else {
+      this.legend.style.display = 'none';
+    }
   }
   describeArc(cx, cy, r, startAngle, endAngle) {
     const rad = Math.PI / 180;
@@ -103,12 +134,13 @@ class PieChart extends HTMLElement {
       this._observer.disconnect();
       this._observer = null;
     }
-    this._hasAnimated = false;
     this._observer = new window.IntersectionObserver(entries => {
       entries.forEach(entry => {
-        if (entry.isIntersecting && !this._hasAnimated) {
-          this.animateSlices();
-          this._hasAnimated = true;
+        if (entry.isIntersecting) {
+          this._inView = true;
+          this.restartAnimation();
+        } else {
+          this._inView = false;
         }
       });
     }, { threshold: 0.4 });
@@ -143,7 +175,6 @@ class PieChart extends HTMLElement {
     this._animationFrame = requestAnimationFrame(animate);
   }
   restartAnimation() {
-    this._hasAnimated = false;
     this.animateSlices();
   }
   startRepeatAnimation() {
@@ -153,7 +184,9 @@ class PieChart extends HTMLElement {
       this._interval = null;
     }
     this._interval = setInterval(() => {
-      this.restartAnimation();
+      if (this._inView) {
+        this.restartAnimation();
+      }
     }, interval);
     this.restartAnimation();
   }
