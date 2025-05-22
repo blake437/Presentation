@@ -1,9 +1,11 @@
 * {
   box-sizing: border-box;
 }
+
 html, body {
   height: 100%;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 section {
@@ -12,11 +14,7 @@ section {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-html, body {
-  height: 100%;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
+
 .slidetitle {
   font-size: 2.5em;
   font-weight: bold;
@@ -27,26 +25,26 @@ html, body {
   letter-spacing: 0.03em;
   line-height: 1.1;
 }
-.slidecenter{
+
+.slidecenter {
   text-align: center;
   padding-top: 12vh;
 }
-h1{
+
+h1 {
   text-align: center;
   color: darkblue;
   z-index: 100;
   font-size: 10vw;
 }
-h2{
+
+h2 {
   text-align: center;
   color: blue;
   z-index: 100;
   font-size: 5vw;
 }
-section{
-  width: 100vw;
-  height: 100vh;
-}
-.titleslide{
+
+.titleslide {
   background-color: lightgreen;
 }
