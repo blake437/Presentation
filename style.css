@@ -4,6 +4,17 @@
 html, body {
   height: 100%;
   overflow-x: hidden;
+}
+
+section {
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+html, body {
+  height: 100%;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 .slidetitle {
