@@ -29,24 +29,16 @@ class PieChart extends HTMLElement {
     this.querySelector('.pie-container').style.width = '100%';
     this.querySelector('.pie-container').style.height = '100%';
     this.drawChart();
+    this.suppressSeriesContent();
     this.setupAnimationObserver();
     if (this.hasAttribute('repeat-interval')) {
       this.startRepeatAnimation();
     }
   }
   disconnectedCallback() {
-    if (this._observer) {
-      this._observer.disconnect();
-      this._observer = null;
-    }
-    if (this._interval) {
-      clearInterval(this._interval);
-      this._interval = null;
-    }
-    if (this._animationFrame) {
-      cancelAnimationFrame(this._animationFrame);
-      this._animationFrame = null;
-    }
+    if (this._observer) this._observer.disconnect();
+    if (this._interval) clearInterval(this._interval);
+    if (this._animationFrame) cancelAnimationFrame(this._animationFrame);
   }
   drawChart() {
     this.svg.innerHTML = '';
@@ -129,11 +121,12 @@ class PieChart extends HTMLElement {
       'Z'
     ].join(' ');
   }
+  suppressSeriesContent() {
+    const seriesEls = Array.from(this.querySelectorAll('series'));
+    seriesEls.forEach((el) => { el.textContent = ''; });
+  }
   setupAnimationObserver() {
-    if (this._observer) {
-      this._observer.disconnect();
-      this._observer = null;
-    }
+    if (this._observer) this._observer.disconnect();
     this._observer = new window.IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -148,10 +141,7 @@ class PieChart extends HTMLElement {
   }
   animateSlices() {
     if (!this.sliceData || !this.sliceData.length) return;
-    if (this._animationFrame) {
-      cancelAnimationFrame(this._animationFrame);
-      this._animationFrame = null;
-    }
+    if (this._animationFrame) cancelAnimationFrame(this._animationFrame);
     const duration = Number(this.getAttribute('animation-length')) || 1200;
     const startTime = performance.now();
     const animate = (now) => {
@@ -164,7 +154,7 @@ class PieChart extends HTMLElement {
         slice.path.setAttribute('d', this.describeArc(
           slice.cx, slice.cy, slice.r, prevEnd, currentEnd
         ));
-        prevEnd += sweep;
+        prevEnd = currentEnd;
       });
       if (t < 1) {
         this._animationFrame = requestAnimationFrame(animate);
@@ -179,10 +169,7 @@ class PieChart extends HTMLElement {
   }
   startRepeatAnimation() {
     const interval = Number(this.getAttribute('repeat-interval')) || 2000;
-    if (this._interval) {
-      clearInterval(this._interval);
-      this._interval = null;
-    }
+    if (this._interval) clearInterval(this._interval);
     this._interval = setInterval(() => {
       if (this._inView) {
         this.restartAnimation();
