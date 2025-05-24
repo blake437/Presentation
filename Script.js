@@ -1,17 +1,71 @@
 if (window.AOS) AOS.init();
 
+function fillContentFromJSON(obj) {
+  if (!obj || !obj.content) return;
+
+  const content = obj.content;
+
+  // Title & subtitle
+  if (content.title) {
+    const titleEl = document.getElementById("title");
+    if (titleEl) titleEl.textContent = content.title;
+  }
+  if (content.subtitle) {
+    const subtitleEl = document.getElementById("subtitle");
+    if (subtitleEl) subtitleEl.textContent = content.subtitle;
+  }
+
+  // Slides (except title slide)
+  if (Array.isArray(content.slides)) {
+    const slidesContainer = document.getElementById("slides-container");
+    if (slidesContainer) {
+      slidesContainer.innerHTML = "";
+      content.slides.forEach((slide, i) => {
+        const section = document.createElement("section");
+        section.className = "slide";
+
+        if (slide.title) {
+          const h1 = document.createElement("h1");
+          h1.className = "slidetitle";
+          h1.setAttribute("data-aos", "fade-up");
+          h1.textContent = slide.title;
+          section.appendChild(h1);
+        }
+
+        if (slide.text) {
+          const div = document.createElement("div");
+          div.textContent = slide.text;
+          section.appendChild(div);
+        }
+
+        if (Array.isArray(slide.chart)) {
+          const chartDiv = document.createElement("div");
+          chartDiv.style.float = "right";
+          const pieChart = document.createElement("pie-chart");
+          slide.chart.forEach(series => {
+            const s = document.createElement("series");
+            s.setAttribute("value", series.value);
+            if (series.color) s.setAttribute("color", series.color);
+            s.textContent = series.label || "";
+            pieChart.appendChild(s);
+          });
+          chartDiv.appendChild(pieChart);
+          section.appendChild(chartDiv);
+        }
+
+        slidesContainer.appendChild(section);
+      });
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   document.body.style.fontFamily = "'Nunito', sans-serif";
   var str = window.location.href.split('?')[1];
   if (str && JSON) {
     try {
-      var obj = JSON.parse(str);
-      var titleEl = document.getElementById("title");
-      var subtitleEl = document.getElementById("subtitle");
-      if (titleEl && subtitleEl && obj.content) {
-        titleEl.textContent = obj.content.title;
-        subtitleEl.textContent = obj.content.subtitle;
-      }
+      var obj = JSON.parse(decodeURIComponent(str));
+      fillContentFromJSON(obj);
     } catch (e) {}
   }
 });

@@ -1,1 +1,126 @@
-
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
+    <title>Edit Presentation</title>
+    <style>
+      body { font-family: 'Nunito', sans-serif; margin: 2em; }
+      textarea { width: 100%; min-height: 200px; }
+      input, button, select { font-family: inherit; font-size: 1em; }
+      .slide { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
+      .chart-series { margin-left: 2em; }
+    </style>
+  </head>
+  <body>
+    <h1>Edit Presentation</h1>
+    <form id="editor">
+      <label>Title:<br><input id="title" required></label><br><br>
+      <label>Subtitle:<br><input id="subtitle"></label><br><br>
+      <div id="slides"></div>
+      <button type="button" onclick="addSlide()">Add Slide</button><br><br>
+      <label>Exported JSON (use this in the URL):<br>
+        <textarea id="export" readonly></textarea>
+      </label>
+      <p>
+        <button type="submit">Update JSON</button>
+        <button type="button" onclick="copyExport()">Copy</button>
+      </p>
+    </form>
+    <script>
+      let slidesData = [
+        {
+          title: "About 1/3 of all food produced is wasted",
+          text: "",
+          chart: [
+            { value: 1, color: "red", label: "wasted" },
+            { value: 2, color: "blue", label: "not wasted" }
+          ]
+        }
+      ];
+      function renderSlides() {
+        const slidesDiv = document.getElementById("slides");
+        slidesDiv.innerHTML = "";
+        slidesData.forEach((slide, idx) => {
+          const div = document.createElement("div");
+          div.className = "slide";
+          div.innerHTML = `
+            <label>Slide Title:<br><input value="${slide.title || ""}" onchange="editSlide(${idx},'title',this.value)"></label><br>
+            <label>Slide Text:<br><input value="${slide.text || ""}" onchange="editSlide(${idx},'text',this.value)"></label><br>
+            <div class="chart-series" id="chart-series-${idx}">
+              <b>Pie Chart Series</b> <button type="button" onclick="addSeries(${idx})">Add Series</button><br>
+            </div>
+            <button type="button" onclick="removeSlide(${idx})">Remove Slide</button>
+          `;
+          slidesDiv.appendChild(div);
+          renderSeries(idx);
+        });
+      }
+      function renderSeries(slideIdx) {
+        const chartDiv = document.getElementById(`chart-series-${slideIdx}`);
+        chartDiv.innerHTML += (slidesData[slideIdx].chart || []).map((s, j) => `
+          <label>Label: <input value="${s.label || ""}" onchange="editSeries(${slideIdx},${j},'label',this.value)"></label>
+          <label> Value: <input type="number" value="${s.value}" onchange="editSeries(${slideIdx},${j},'value',this.value)"></label>
+          <label> Color: <input value="${s.color || ""}" onchange="editSeries(${slideIdx},${j},'color',this.value)"></label>
+          <button type="button" onclick="removeSeries(${slideIdx},${j})">Remove</button><br>
+        `).join('');
+      }
+      function addSlide() {
+        slidesData.push({ title: "", text: "", chart: [] });
+        renderSlides();
+        updateExport();
+      }
+      function removeSlide(idx) {
+        slidesData.splice(idx, 1);
+        renderSlides();
+        updateExport();
+      }
+      function editSlide(idx, key, value) {
+        slidesData[idx][key] = value;
+        updateExport();
+      }
+      function addSeries(slideIdx) {
+        slidesData[slideIdx].chart = slidesData[slideIdx].chart || [];
+        slidesData[slideIdx].chart.push({ value: 1, color: "", label: "" });
+        renderSlides();
+        updateExport();
+      }
+      function removeSeries(slideIdx, seriesIdx) {
+        slidesData[slideIdx].chart.splice(seriesIdx, 1);
+        renderSlides();
+        updateExport();
+      }
+      function editSeries(slideIdx, seriesIdx, key, value) {
+        if (key === "value") value = Number(value);
+        slidesData[slideIdx].chart[seriesIdx][key] = value;
+        updateExport();
+      }
+      function updateExport() {
+        const exportObj = {
+          content: {
+            title: document.getElementById("title").value,
+            subtitle: document.getElementById("subtitle").value,
+            slides: slidesData
+          }
+        };
+        document.getElementById("export").value = encodeURIComponent(JSON.stringify(exportObj));
+      }
+      function copyExport() {
+        document.getElementById("export").select();
+        document.execCommand("copy");
+      }
+      document.getElementById("editor").onsubmit = function(e) {
+        e.preventDefault();
+        updateExport();
+      };
+      document.getElementById("title").oninput = updateExport;
+      document.getElementById("subtitle").oninput = updateExport;
+      window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById("title").value = "Food waste";
+        document.getElementById("subtitle").value = "And the subtitle goes here";
+        renderSlides();
+        updateExport();
+      });
+    </script>
+  </body>
+</html>
