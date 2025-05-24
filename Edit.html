@@ -10,6 +10,7 @@
       input, button, select { font-family: inherit; font-size: 1em; }
       .slide { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
       .chart-series { margin-left: 2em; }
+      .preview { border: 1px solid #ccc; padding: 1em; margin-top: 2em; background: #f9f9f9; }
     </style>
   </head>
   <body>
@@ -19,14 +20,9 @@
       <label>Subtitle:<br><input id="subtitle"></label><br><br>
       <div id="slides"></div>
       <button type="button" onclick="addSlide()">Add Slide</button><br><br>
-      <label>Exported JSON (use this in the URL):<br>
-        <textarea id="export" readonly></textarea>
-      </label>
-      <p>
-        <button type="submit">Update JSON</button>
-        <button type="button" onclick="copyExport()">Copy</button>
-      </p>
+      <button type="button" id="goToIndex">Go to Presentation</button>
     </form>
+    <div class="preview" id="livePreview"></div>
     <script>
       let slidesData = [
         {
@@ -68,58 +64,70 @@
       function addSlide() {
         slidesData.push({ title: "", text: "", chart: [] });
         renderSlides();
-        updateExport();
+        updatePreview();
       }
       function removeSlide(idx) {
         slidesData.splice(idx, 1);
         renderSlides();
-        updateExport();
+        updatePreview();
       }
       function editSlide(idx, key, value) {
         slidesData[idx][key] = value;
-        updateExport();
+        updatePreview();
       }
       function addSeries(slideIdx) {
         slidesData[slideIdx].chart = slidesData[slideIdx].chart || [];
         slidesData[slideIdx].chart.push({ value: 1, color: "", label: "" });
         renderSlides();
-        updateExport();
+        updatePreview();
       }
       function removeSeries(slideIdx, seriesIdx) {
         slidesData[slideIdx].chart.splice(seriesIdx, 1);
         renderSlides();
-        updateExport();
+        updatePreview();
       }
       function editSeries(slideIdx, seriesIdx, key, value) {
         if (key === "value") value = Number(value);
         slidesData[slideIdx].chart[seriesIdx][key] = value;
-        updateExport();
+        updatePreview();
       }
-      function updateExport() {
-        const exportObj = {
+      function getExportedJSON() {
+        return encodeURIComponent(JSON.stringify({
           content: {
             title: document.getElementById("title").value,
             subtitle: document.getElementById("subtitle").value,
             slides: slidesData
           }
+        }));
+      }
+      function updatePreview() {
+        // Live preview of the main fields and slides
+        const data = {
+          title: document.getElementById("title").value,
+          subtitle: document.getElementById("subtitle").value,
+          slides: slidesData
         };
-        document.getElementById("export").value = encodeURIComponent(JSON.stringify(exportObj));
+        let html = `<h2>${data.title}</h2>`;
+        if (data.subtitle) html += `<h3>${data.subtitle}</h3>`;
+        html += data.slides.map(s =>
+          `<div><strong>${s.title}</strong><br>${s.text || ""}</div>`
+        ).join('<hr>');
+        document.getElementById("livePreview").innerHTML = html;
       }
-      function copyExport() {
-        document.getElementById("export").select();
-        document.execCommand("copy");
-      }
+      document.getElementById("goToIndex").onclick = function() {
+        window.location.href = "index.html?json=" + getExportedJSON();
+      };
       document.getElementById("editor").onsubmit = function(e) {
         e.preventDefault();
-        updateExport();
+        updatePreview();
       };
-      document.getElementById("title").oninput = updateExport;
-      document.getElementById("subtitle").oninput = updateExport;
+      document.getElementById("title").oninput = updatePreview;
+      document.getElementById("subtitle").oninput = updatePreview;
       window.addEventListener('DOMContentLoaded', () => {
         document.getElementById("title").value = "Food waste";
         document.getElementById("subtitle").value = "And the subtitle goes here";
         renderSlides();
-        updateExport();
+        updatePreview();
       });
     </script>
   </body>
