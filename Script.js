@@ -5,7 +5,6 @@ function fillContentFromJSON(obj) {
 
   const content = obj.content;
 
-  // Title & subtitle
   if (content.title) {
     const titleEl = document.getElementById("title");
     if (titleEl) titleEl.textContent = content.title;
@@ -15,7 +14,6 @@ function fillContentFromJSON(obj) {
     if (subtitleEl) subtitleEl.textContent = content.subtitle;
   }
 
-  // Slides (except title slide)
   if (Array.isArray(content.slides)) {
     const slidesContainer = document.getElementById("slides-container");
     if (slidesContainer) {
@@ -59,6 +57,42 @@ function fillContentFromJSON(obj) {
   }
 }
 
+function setDefaultContent() {
+  const titleEl = document.getElementById("title");
+  if (titleEl) titleEl.textContent = "Food waste";
+  const subtitleEl = document.getElementById("subtitle");
+  if (subtitleEl) subtitleEl.textContent = "And the subtitle goes here";
+  const slidesContainer = document.getElementById("slides-container");
+  if (slidesContainer) {
+    slidesContainer.innerHTML = "";
+    const section = document.createElement("section");
+    section.className = "slide";
+    const h1 = document.createElement("h1");
+    h1.className = "slidetitle";
+    h1.setAttribute("data-aos", "fade-up");
+    h1.textContent = "About 1/3 of all food produced is wasted";
+    section.appendChild(h1);
+    const div = document.createElement("div");
+    section.appendChild(div);
+    const chartDiv = document.createElement("div");
+    chartDiv.style.float = "right";
+    const pieChart = document.createElement("pie-chart");
+    const s1 = document.createElement("series");
+    s1.setAttribute("value", 1);
+    s1.setAttribute("color", "red");
+    s1.textContent = "wasted";
+    pieChart.appendChild(s1);
+    const s2 = document.createElement("series");
+    s2.setAttribute("value", 2);
+    s2.setAttribute("color", "blue");
+    s2.textContent = "not wasted";
+    pieChart.appendChild(s2);
+    chartDiv.appendChild(pieChart);
+    section.appendChild(chartDiv);
+    slidesContainer.appendChild(section);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   document.body.style.fontFamily = "'Nunito', sans-serif";
   var str = window.location.href.split('?')[1];
@@ -66,8 +100,10 @@ document.addEventListener("DOMContentLoaded", function() {
     try {
       var obj = JSON.parse(decodeURIComponent(str));
       fillContentFromJSON(obj);
+      return;
     } catch (e) {}
   }
+  setDefaultContent();
 });
 
 let scrollTimeout;
