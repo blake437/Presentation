@@ -3,7 +3,7 @@ name: Summarize new issues
 on:
   issues:
     types: [opened]
-    tags: [copilot]
+    labels: [copilot]
 
 jobs:
   summary:
