@@ -93,12 +93,18 @@ function setDefaultContent() {
   }
 }
 
+function getQueryParam(name) {
+  const query = window.location.search.substring(1);
+  const params = new URLSearchParams(query);
+  return params.get(name);
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   document.body.style.fontFamily = "'Nunito', sans-serif";
-  var str = window.location.href.split('?')[1];
-  if (str && JSON) {
+  const jsonStr = getQueryParam("json");
+  if (jsonStr && JSON) {
     try {
-      var obj = JSON.parse(decodeURIComponent(str));
+      const obj = JSON.parse(decodeURIComponent(jsonStr));
       fillContentFromJSON(obj);
       return;
     } catch (e) {}
