@@ -32,7 +32,7 @@ jobs:
             Summarize the following GitHub comment in one paragraph:
             Issue Title: ${{ github.event.issue.title }}
             Comment: ${{ github.event.comment.body }}
-            Try to find possible solutions.
+            Try to find possible solutions with the new information.
             {% endif %}
 
       - name: Comment with AI summary
