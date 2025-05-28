@@ -18,6 +18,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Fetch past comments (if comment event)
+        if: github.event_name == 'issue_comment'
+        id: get_comments
+        run: |
+          COMMENTS=$(gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --paginate --jq '.[].body' | jq -Rs .)
+          echo "comments=$COMMENTS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get issue labels
+        id: get_labels
+        run: |
+          LABELS=$(gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }} --jq '.labels[].name' | jq -Rs .)
+          echo "labels=$LABELS" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get repo metadata
+        id: get_repo
+        run: |
+          REPO_DATA=$(gh api repos/${{ github.repository }})
+          echo "repo=$REPO_DATA" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run AI inference
         id: inference
         uses: actions/ai-inference@v1
@@ -27,13 +52,19 @@ jobs:
             Summarize the following GitHub issue in one paragraph:
             Title: ${{ github.event.issue.title }}
             Body: ${{ github.event.issue.body }}
+            Labels: ${{ steps.get_labels.outputs.labels }}
+            Repo: ${{ steps.get_repo.outputs.repo }}
             Try to find possible solutions.
             {% else %}
             Summarize the following GitHub comment in one paragraph:
             Issue Title: ${{ github.event.issue.title }}
             Comment: ${{ github.event.comment.body }}
+            All Past Comments: ${{ steps.get_comments.outputs.comments }}
+            Labels: ${{ steps.get_labels.outputs.labels }}
+            Repo: ${{ steps.get_repo.outputs.repo }}
             Try to find possible solutions with the new information.
             {% endif %}
+            List the possible solutions. Format the solutions as a bulleted list in MarkDown.
 
       - name: Comment with AI summary
         run: |
