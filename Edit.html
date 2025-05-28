@@ -107,12 +107,25 @@
           subtitle: document.getElementById("subtitle").value,
           slides: slidesData
         };
-        let html = `<h2>${data.title}</h2>`;
-        if (data.subtitle) html += `<h3>${data.subtitle}</h3>`;
+        let html = `<h2>${escapeHTML(data.title)}</h2>`;
+        if (data.subtitle) html += `<h3>${escapeHTML(data.subtitle)}</h3>`;
         html += data.slides.map(s =>
-          `<div><strong>${s.title}</strong><br>${s.text || ""}</div>`
+          `<div><strong>${escapeHTML(s.title)}</strong><br>${escapeHTML(s.text || "")}</div>`
         ).join('<hr>');
         document.getElementById("livePreview").innerHTML = html;
+        
+        function escapeHTML(str) {
+          return str.replace(/[&<>"']/g, function (char) {
+            const escapeMap = {
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;'
+            };
+            return escapeMap[char];
+          });
+        }
       }
       document.getElementById("goToIndex").onclick = function() {
         window.location.href = "index.html?json=" + getExportedJSON();
