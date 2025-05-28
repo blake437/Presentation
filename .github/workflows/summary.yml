@@ -24,7 +24,7 @@ jobs:
             Summarize the following GitHub issue in one paragraph:
             Title: ${{ github.event.issue.title }}
             Body: ${{ github.event.issue.body }}
-            Try to find possible solutions.
+            Try to find possible solutions. 
 
       - name: Comment with AI summary
         run: |
