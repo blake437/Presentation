@@ -346,3 +346,7 @@ class BarChart extends HTMLElement {
   }
 }
 customElements.define('bar-chart', BarChart);
+// Register a dummy custom element for <series> so it is recognized in the DOM
+if (!customElements.get('series')) {
+  customElements.define('series', class extends HTMLElement {});
+}
