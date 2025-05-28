@@ -7,13 +7,16 @@ on:
     types: [created]
 
 jobs:
-  summary:
+  prepare_resources:
     runs-on: ubuntu-latest
     permissions:
       issues: write
       models: read
       contents: read
-
+    outputs:
+      comments: ${{ steps.get_comments.outputs.comments }}
+      labels: ${{ steps.get_labels.outputs.labels }}
+      repo: ${{ steps.get_repo.outputs.repo }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,6 +46,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  run_ai:
+    needs: prepare_resources
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      models: read
+      contents: read
+    outputs:
+      response: ${{ steps.inference.outputs.response }}
+    steps:
       - name: Run AI inference
         id: inference
         uses: actions/ai-inference@v1
@@ -52,23 +65,29 @@ jobs:
             Summarize the following GitHub issue in one paragraph:
             Title: ${{ github.event.issue.title }}
             Body: ${{ github.event.issue.body }}
-            Labels: ${{ steps.get_labels.outputs.labels }}
-            Repo: ${{ steps.get_repo.outputs.repo }}
+            Labels: ${{ needs.prepare_resources.outputs.labels }}
+            Repo: ${{ needs.prepare_resources.outputs.repo }}
             Try to find possible solutions.
             {% else %}
             Summarize the following GitHub comment in one paragraph:
             Issue Title: ${{ github.event.issue.title }}
             Comment: ${{ github.event.comment.body }}
-            All Past Comments: ${{ steps.get_comments.outputs.comments }}
-            Labels: ${{ steps.get_labels.outputs.labels }}
-            Repo: ${{ steps.get_repo.outputs.repo }}
+            All Past Comments: ${{ needs.prepare_resources.outputs.comments }}
+            Labels: ${{ needs.prepare_resources.outputs.labels }}
+            Repo: ${{ needs.prepare_resources.outputs.repo }}
             Try to find possible solutions with the new information.
             {% endif %}
             List the possible solutions. Format the solutions as a bulleted list in MarkDown.
 
+  send_comment:
+    needs: run_ai
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
       - name: Comment with AI summary
         run: |
-          gh issue comment $ISSUE_NUMBER --body "${{ steps.inference.outputs.response }}"
+          gh issue comment $ISSUE_NUMBER --body "${{ needs.run_ai.outputs.response }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
