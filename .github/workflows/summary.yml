@@ -3,7 +3,6 @@ name: Summarize new issues
 on:
   issues:
     types: [opened]
-    labels: [copilot]
 
 jobs:
   summary:
@@ -25,6 +24,7 @@ jobs:
             Summarize the following GitHub issue in one paragraph:
             Title: ${{ github.event.issue.title }}
             Body: ${{ github.event.issue.body }}
+            Try to find possible solutions.
 
       - name: Comment with AI summary
         run: |
