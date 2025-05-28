@@ -1,9 +1,0 @@
-messages:
-  - role: system
-    content: |
-      Fix the provided issue.
-      Title: {{title}}
-      Body:{{body}}
-  - role: user
-    content: ''
-model: openai/gpt-4o
