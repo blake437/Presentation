@@ -1,8 +1,10 @@
-name: Summarize new issues
+name: Summarize new issues and comments
 
 on:
   issues:
     types: [opened]
+  issue_comment:
+    types: [created]
 
 jobs:
   summary:
@@ -21,10 +23,17 @@ jobs:
         uses: actions/ai-inference@v1
         with:
           prompt: |
+            {% if github.event_name == 'issues' %}
             Summarize the following GitHub issue in one paragraph:
             Title: ${{ github.event.issue.title }}
             Body: ${{ github.event.issue.body }}
-            Try to find possible solutions. 
+            Try to find possible solutions.
+            {% else %}
+            Summarize the following GitHub comment in one paragraph:
+            Issue Title: ${{ github.event.issue.title }}
+            Comment: ${{ github.event.comment.body }}
+            Try to find possible solutions.
+            {% endif %}
 
       - name: Comment with AI summary
         run: |
