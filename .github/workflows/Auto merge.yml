@@ -1,0 +1,54 @@
+name: Auto Merge PRs from Contributors
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled # Helps detect when PRs are marked "ready" via labels
+
+  check_suite:
+    types:
+      - completed # Runs when all status checks finish
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR Author is a Contributor
+        id: check_contributor
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: contributors } = await github.rest.repos.listContributors({ owner, repo });
+            const prAuthor = context.payload.pull_request.user.login;
+            const isContributor = contributors.some(contributor => contributor.login === prAuthor);
+            core.setOutput("is_contributor", isContributor);
+
+      - name: Ensure All Status Checks Passed
+        id: check_status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const ref = context.payload.pull_request.head.sha;
+            const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref });
+
+            if (combinedStatus.state !== 'success') {
+              throw new Error('All checks have NOT passed!');
+            }
+
+      - name: Merge the Pull Request
+        if: steps.check_contributor.outputs.is_contributor == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge ${{ github.event.pull_request.number }} --merge
