@@ -1,7 +1,6 @@
 {
   "extends": "stylelint-config-standard",
   "rules": {
-    "@stylistic/indentation": 2,
     "no-empty-source": null
   }
 }
