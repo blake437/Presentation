@@ -83,7 +83,68 @@ jobs:
             Try to find possible solutions with the new information.
             {% endif %}
             List the possible solutions. Format the solutions as a bulleted list in MarkDown.
+list_fixes:
+    needs: run_ai
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "${{ needs.run_ai.outputs.response }}" > ai_response.md
+          csplit --quiet --prefix=fix_ --suffix-format='%02d.md' ai_response.md '/^\* /' '{*}'
+          rm fix_00.md || true
+          find . -name "fix_*.md" | sort > fix_files.txt
 
+  write_fixes_and_prs:
+    needs: list_fixes
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          idx=1
+          for fixfile in $(cat fix_files.txt); do
+            branch="ai-fix-$idx"
+            git checkout -b "$branch"
+            awk '
+              BEGIN {in_code=0; filename=""}
+              /^\`\`\`/ {
+                if (in_code == 0) {
+                  in_code=1
+                  if (match($0, /path=([^ ]+)/, arr)) {
+                    filename=arr[1]
+                    next
+                  } else if (match($0, /delete=([^ ]+)/, arr)) {
+                    filename=arr[1]
+                    system("rm -f " filename)
+                    in_code=0
+                    next
+                  }
+                } else {
+                  in_code=0
+                  filename=""
+                }
+                next
+              }
+              {
+                if (in_code && filename != "") {
+                  print $0 >> filename
+                }
+              }
+            ' "$fixfile"
+            git add .
+            if git diff --cached --quiet; then
+              git checkout main
+              git branch -D "$branch"
+              continue
+            fi
+            git commit -m "AI: Apply fix $idx"
+            git push origin "$branch"
+            gh pr create --base main --head "$branch" --title "AI Fix $idx" --body "Implements fix $idx from AI output. Linked to issue #${{ github.event.issue.number }}."
+            idx=$((idx+1))
+          done
   send_comment:
     needs: run_ai
     runs-on: ubuntu-latest
