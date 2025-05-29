@@ -1,9 +1,10 @@
+
 .pie-container {
   width: 350px;
   height: 350px;
   background: #fff;
   border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0,0,0,8%);
+  box-shadow: 0 8px 24px #000 8%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -38,7 +39,7 @@
   height: 18px;
   border-radius: 4px;
   margin-right: 6px;
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
 }
 
 .pie-legend-label {
@@ -50,9 +51,9 @@
 .bar-container {
   width: 350px;
   height: 350px;
-  background: #ffffff;
+  background: #fff;
   border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 24px #000 8%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -87,7 +88,7 @@
   height: 18px;
   border-radius: 4px;
   margin-right: 6px;
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
 }
 
 .bar-legend-label {
