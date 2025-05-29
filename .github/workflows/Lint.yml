@@ -24,4 +24,4 @@ jobs:
         run: npx eslint . --ext .js --max-warnings=0
   
       - name: Run stylelint
-        run: npx stylelint "**/*.css"
+        run: npx stylelint "**/*.css" --config .stylelintrc.json
