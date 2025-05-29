@@ -1,7 +1,7 @@
 {
   "extends": "stylelint-config-standard",
   "rules": {
-    "indentation": 2,
+    "@stylistic/indentation": "tab",
     "no-empty-source": null
   }
 }
