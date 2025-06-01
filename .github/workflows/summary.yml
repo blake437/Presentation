@@ -95,6 +95,8 @@ jobs:
   write_fixes_and_prs:
     needs: list_fixes
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
