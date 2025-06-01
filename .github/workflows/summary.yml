@@ -93,56 +93,78 @@ jobs:
           find . -name "fix_*.md" | sort > fix_files.txt
 
   write_fixes_and_prs:
-    needs: list_fixes
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: |
-          idx=1
-          for fixfile in $(cat fix_files.txt); do
-            branch="ai-fix-$idx"
-            git checkout -b "$branch"
-            awk '
-              BEGIN {in_code=0; filename=""}
-              /^\`\`\`/ {
-                if (in_code == 0) {
-                  in_code=1
-                  if (match($0, /path=([^ ]+)/, arr)) {
-                    filename=arr[1]
-                    next
-                  } else if (match($0, /delete=([^ ]+)/, arr)) {
-                    filename=arr[1]
-                    system("rm -f " filename)
-                    in_code=0
-                    next
-                  }
-                } else {
-                  in_code=0
-                  filename=""
-                }
-                next
-              }
-              {
-                if (in_code && filename != "") {
-                  print $0 >> filename
-                }
-              }
-            ' "$fixfile"
-            git add .
-            if git diff --cached --quiet; then
-              git checkout main
-              git branch -D "$branch"
-              continue
-            fi
-            git commit -m "AI: Apply fix $idx"
-            git push origin "$branch"
-            gh pr create --base main --head "$branch" --title "AI Fix $idx" --body "Implements fix $idx from AI output. Linked to issue #${{ github.event.issue.number }}."
-            idx=$((idx+1))
-          done
+   needs: list_fixes
+   runs-on: ubuntu-latest
+   env:
+     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+   steps:
+     - uses: actions/checkout@v4
+       with:
+         fetch-depth: 0
+
+     - name: Prepare
+       id: prep
+       run: |
+         idx=1
+         while IFS= read -r fixfile; do
+           echo "$fixfile" >> all_fixes.txt
+           idx=$((idx+1))
+         done < fix_files.txt
+
+     - name: Run AI and create PRs per fix
+       run: |
+         idx=1
+         while IFS= read -r fixfile; do
+           branch="ai-fix-$idx"
+           fixdesc=$(cat "$fixfile")
+
+           # Prompt for the AI
+           ai_prompt="Given the following fix description, generate the precise file changes (creations, updates, deletions) to implement it. For each file to be created or updated, output a code block in this format: \`\`\`path=path/to/file.extension<file contents>\`\`\` To delete a file, output a code block in this format: \`\`\`delete=path/to/file.extension \`\`\` Only output code blocks; do not include explanations. Fix description: $fixdesc"
+
+          # Run AI to generate file changes for this fix
+          gh copilot workspace code --prompt "$ai_prompt" --output ai_patch.md
+           # Parse AI output and apply file changes
+           git checkout -b "$branch"
+           awk '
+             BEGIN {in_code=0; filename=""}
+             /^\`\`\`/ {
+               if (in_code == 0) {
+                 in_code=1
+                 if (match($0, /path=([^ ]+)/, arr)) {
+                   filename=arr[1]
+                   next
+                 } else if (match($0, /delete=([^ ]+)/, arr)) {
+                   filename=arr[1]
+                   system("rm -f " filename)
+                   in_code=0
+                   next
+                 }
+               } else {
+                 in_code=0
+                 filename=""
+               }
+               next
+             }
+             {
+               if (in_code && filename != "") {
+                 print $0 >> filename
+               }
+             }
+           ' ai_patch.md
+
+           git add .
+           if git diff --cached --quiet; then
+             git checkout main
+             git branch -D "$branch"
+             idx=$((idx+1))
+            continue
+           fi
+           git commit -m "AI: Apply fix $idx"
+           git push origin "$branch"
+           gh pr create --base main --head "$branch" --title "AI Fix $idx" --body "Implements fix $idx from AI output. Linked to issue #${{ github.event.issue.number }}."
+           idx=$((idx+1))
+           git checkout main
+         done < all_fixes.txt
 
   send_comment:
     needs: run_ai
