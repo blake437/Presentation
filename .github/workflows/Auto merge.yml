@@ -44,7 +44,7 @@ jobs:
             const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref });
 
             if (combinedStatus.state !== 'success') {
-              throw new Error('All checks have NOT passed!');
+              throw new Error('Some checks have NOT passed!');
             }
 
       - name: Merge the Pull Request
