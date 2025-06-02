@@ -122,7 +122,14 @@ jobs:
            fixdesc=$(cat "$fixfile")
 
            # Prompt for the AI
-           ai_prompt="Given the following fix description, generate the precise file changes (creations, updates, deletions) to implement it. For each file to be created or updated, output a code block in this format: \`\`\`path=path/to/file.extension<file contents>\`\`\` To delete a file, output a code block in this format: \`\`\`delete=path/to/file.extension \`\`\` Only output code blocks; do not include explanations. Fix description: $fixdesc"
+           ai_prompt="Given the following fix description, generate the precise file changes (creations, updates, deletions) to implement it. For each file to be created or updated, output a code block in this format:
+           \`\`\`path=path/to/file.extension
+           <file contents>
+           \`\`\` 
+           To delete a file, output a code block in this format: 
+           \`\`\`delete=path/to/file.extension \`\`\`
+           Only output code blocks; do not include explanations.
+           Fix description: $fixdesc"
 
           # Run AI to generate file changes for this fix
           gh copilot workspace code --prompt "$ai_prompt" --output ai_patch.md
