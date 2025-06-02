@@ -169,7 +169,7 @@ jobs:
              idx=$((idx+1))
             continue
            fi
-           git commit -m "AI: Apply fix $idx"
+           git commit -m "AI: Apply fix $
            git push origin "$branch"
            gh pr create --base main --head "$branch" --title "AI Fix $idx" --body "Implements fix $idx from AI output. Linked to issue #${{ github.event.issue.number }}."
            idx=$((idx+1))
@@ -182,9 +182,15 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Comment with AI summary
-        run: |
-          gh issue comment $ISSUE_NUMBER --body "${{ needs.run_ai.outputs.response }}"
+      - name: Post AI summary as issue comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          AI_COMMENT: ${{ needs.run_ai.outputs.response }}
+        run: |
+          if [ -z "$AI_COMMENT" ]; then
+            echo "No AI summary to post. Skipping comment."
+            exit 0
+          fi
+
+          gh issue comment "$ISSUE_NUMBER" --body "$AI_COMMENT"
