@@ -41,10 +41,14 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const ref = context.payload.pull_request.head.sha;
-            const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref });
 
-            if (combinedStatus.state !== 'success') {
-              throw new Error('Some checks have NOT passed!');
+            const thisWorkflow = 'Auto Merge PRs from Contributors';
+            const otherStatuses = combinedStatus.statuses.filter(status =>
+             status.context !== `github-actions/${thisWorkflow}`
+            );
+            const allPassed = otherStatuses.every(status => status.state === 'success');
+            if (!allPassed) {
+             throw new Error('Some checks have NOT passed!');
             }
 
       - name: Merge the Pull Request
